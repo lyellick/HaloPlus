@@ -1,4 +1,4 @@
-# <img src="public/icons/icon_48.png" width="45" align="left"> Halo Plus
+# <img src="public/icons/icon_48.png" width="45" align="left"> Halo+
 
 My Chrome Extension
 
