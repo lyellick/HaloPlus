@@ -9,9 +9,6 @@
     "48": "icons/icon_48.png",
     "128": "icons/icon_128.png"
   },
-  "background": {
-    "service_worker": "background.js"
-  },
   "action": {
     "default_title": "Halo Plus",
     "default_popup": "popup.html"
@@ -24,6 +21,7 @@
       "matches": [
         "https://psa.bluenetinc.com/*"
       ],
+      "run_at": "document_idle",
       "js": [
         "contentScript.js"
       ]
