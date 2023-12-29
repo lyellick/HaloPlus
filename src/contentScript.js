@@ -12,20 +12,96 @@ import { storage } from '@extend-chrome/storage'
             var params = getQueryParameters();
             var statusTypes = await getStatusTypes(auth.access_token);
             var data = await getData(`${location.origin}/api/tickets?list_id=${params.selid}&ticketarea_id=${params.area}`, auth.access_token);
+
+            for (let i = 0; i < data.tickets.length; i++) { 
+                var agent = await getData(`${location.origin}/api/agent/${data.tickets[i].agent_id}`, auth.access_token);
+                data.tickets[i].agent_name = agent.name;
+            }
+
             const tree = ticketTree(data.tickets);
-            console.log(tree);
+            document.getElementById('mainlist').innerHTML = '';
+
+            var kanban = '';
+
+            kanban += `<div class="d-flex flex-column" style="gap:.5rem;">`;
+
+            for (let p = 0; p < tree.length; p++) {
+                auth = await authenticate();
+                kanban += `<div>`;
+
+                var project = tree[p];
+                var projectUri = `${location.origin}/tickets?id=${project.id}`;
+
+                kanban += `<div class="h4">${project.summary}</div>`;
+
+                kanban += `<div class="pl-4 py-2" style="display: -webkit-box;overflow:auto;">`;
+
+                var statuses = groupByStatus(project.children, statusTypes);
+
+                Object.entries(statuses).forEach(async ([key, value]) => {
+                    kanban += `<div style="width:30rem;">`;
+                    kanban += `<div class="h5">${key}</div>`;
+                    kanban += `<div class="px-3">`;
+                    for (let c = 0; c < value.length; c++) {
+                        kanban += `<div class="py-2">`;
+                        var child = value[c];
+                        var childUri = `${location.origin}/tickets?id=${child.id}`;
+                        kanban += `<div class="d-flex flex-row justify-content-between pb-2">`;
+                        kanban += `<div>${child.id}</div>`;
+                        kanban += `<div>${child.agent_name}</div>`;
+                        kanban += `</div>`;
+                        
+                        kanban += `<div>${child.summary}</div>`;
+                        kanban += `<div>${child.details}</div>`;
+                        kanban += `</div>`;
+                    }
+                    kanban += `</div>`;
+                    kanban += `</div>`;
+                });
+
+                kanban += `</div>`;
+
+                kanban += `</div>`;
+            }
+
+            kanban += `</div>`;
+
+            document.getElementById('mainlist').innerHTML = kanban;
         });
     });
 })();
 
+function groupByStatus(children, statusTypes) {
+    var statuses = {};
+
+    for (let c = 0; c < children.length; c++) {
+        var child = children[c];
+        const statusId = statusTypes[child.status_id];
+
+        if (!statuses[statusId]) {
+            statuses[statusId] = [];
+        }
+
+        statuses[statusId].push(child);
+    }
+
+    return statuses;
+}
+
+async function getAgentById(id, token) {
+    if (id) {
+        var agent = await getData(`${location.origin}/api/agent/${id}`, token);
+        return agent;
+    }
+    return null;
+}
+
 async function getStatusTypes(token) {
-    var types = await getData(`${location.origin}/api/status`, token);
-    return types.map(item => {
-        return {
-            id: item.id,
-            name: item.name
-        };
-    });
+    const types = await getData(`${location.origin}/api/status`, token);
+    return types.reduce((result, item) => {
+        result[item.id] = item.name;
+        return result;
+    }, {});
 }
 
 function ticketTree(tickets) {
