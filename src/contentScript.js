@@ -13,7 +13,7 @@ import { storage } from '@extend-chrome/storage'
             var statusTypes = await getStatusTypes(auth.access_token);
             var data = await getData(`${location.origin}/api/tickets?list_id=${params.selid}&ticketarea_id=${params.area}`, auth.access_token);
 
-            for (let i = 0; i < data.tickets.length; i++) { 
+            for (let i = 0; i < data.tickets.length; i++) {
                 var agent = await getData(`${location.origin}/api/agent/${data.tickets[i].agent_id}`, auth.access_token);
                 data.tickets[i].agent_name = agent.name;
             }
@@ -23,7 +23,7 @@ import { storage } from '@extend-chrome/storage'
 
             var kanban = '';
 
-            kanban += `<div class="d-flex flex-column" style="gap:.5rem;">`;
+            kanban += `<div class="d-flex flex-column p-4" style="gap:.5rem;">`;
 
             for (let p = 0; p < tree.length; p++) {
                 auth = await authenticate();
@@ -32,27 +32,34 @@ import { storage } from '@extend-chrome/storage'
                 var project = tree[p];
                 var projectUri = `${location.origin}/tickets?id=${project.id}`;
 
-                kanban += `<div class="h4">${project.summary}</div>`;
+                kanban += `<div class="d-flex flex-row align-items-center justify-content-between pb-2">`;
+                kanban += `<div class="h5"><a href="${projectUri}" target="_blank">${addPadding(project.id)}</a> - ${project.summary}</div>`;
+                kanban += `<div class="pl-3">${statusTypes[project.status_id]}</div>`;
+                kanban += `</div>`;
 
                 kanban += `<div class="pl-4 py-2" style="display: -webkit-box;overflow:auto;">`;
 
                 var statuses = groupByStatus(project.children, statusTypes);
 
+                if (!Object.keys(statuses).length) {
+                    kanban += `<div>Tasks Not Present</div>`;
+                }
+
                 Object.entries(statuses).forEach(async ([key, value]) => {
                     kanban += `<div style="width:30rem;">`;
-                    kanban += `<div class="h5">${key}</div>`;
-                    kanban += `<div class="px-3">`;
+                    kanban += `<div class="h5 pb-2">${key}</div>`;
+                    kanban += `<div class="px-2">`;
                     for (let c = 0; c < value.length; c++) {
-                        kanban += `<div class="py-2">`;
+                        kanban += `<div class="p-2 bg-dark mb-2">`;
                         var child = value[c];
                         var childUri = `${location.origin}/tickets?id=${child.id}`;
-                        kanban += `<div class="d-flex flex-row justify-content-between pb-2">`;
-                        kanban += `<div>${child.id}</div>`;
+                        kanban += `<div class="d-flex flex-row align-items-center justify-content-between pb-2">`;
+                        kanban += `<a href="${childUri}" target="_blank">${addPadding(child.id)}</a>`;
                         kanban += `<div>${child.agent_name}</div>`;
                         kanban += `</div>`;
-                        
-                        kanban += `<div>${child.summary}</div>`;
-                        kanban += `<div>${child.details}</div>`;
+
+                        kanban += `<div class="h6 bold">${child.summary}</div>`;
+                        kanban += `<p>${trimSentence(child.details, 180)}</p>`;
                         kanban += `</div>`;
                     }
                     kanban += `</div>`;
@@ -70,6 +77,22 @@ import { storage } from '@extend-chrome/storage'
         });
     });
 })();
+
+function trimSentence(sentence, maxLength) {
+    if (sentence.length > maxLength) {
+        return sentence.substring(0, maxLength) + "...";
+    } else {
+        return sentence;
+    }
+}
+
+function addPadding(number) {
+    let numberString = number.toString();
+    const desiredLength = 7;
+    let paddedNumber = numberString.padStart(desiredLength, '0');
+
+    return paddedNumber;
+}
 
 function groupByStatus(children, statusTypes) {
     var statuses = {};
