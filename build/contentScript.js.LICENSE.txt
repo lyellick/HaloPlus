@@ -1,0 +1,7 @@
+/*!
+ * chrome-promise
+ * https://github.com/tfoxy/chrome-promise
+ *
+ * Copyright 2015 Tomás Fox
+ * Released under the MIT license
+ */
