@@ -20,6 +20,7 @@ import { storage } from '@extend-chrome/storage'
 
             const tree = ticketTree(data.tickets);
             document.getElementById('mainlist').innerHTML = '';
+            document.getElementById('mainlist').setAttribute("style", "overflow: overlay;");
 
             var kanban = '';
 
